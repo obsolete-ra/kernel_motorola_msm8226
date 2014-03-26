@@ -5,6 +5,7 @@
 
 ## Additional Features ##
 CONFIG_FRANDOM=y
+CONFIG_LCD_KCAL=y
 
 ## Additional Hotplug ##
 CONFIG_ALUCARD_HOTPLUG=y
