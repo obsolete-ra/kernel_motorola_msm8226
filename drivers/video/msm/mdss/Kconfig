@@ -48,9 +48,7 @@ config MMI_PANEL_NOTIFICATIONS
 	---help---
 	MMI panel notifications framework
 
-config MDSS_QUICKDRAW
-	select FB_QUICKDRAW
-	bool "MDSS quickdraw"
+config LCD_KCAL
+	depends on FB_MSM_MDSS
+	bool "Enable sysfs for LCD KCAL"
 	default n
-	---help---
-	  MDSS support for Framebuffer quickdraw
