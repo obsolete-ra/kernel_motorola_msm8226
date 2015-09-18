@@ -184,7 +184,7 @@ static ssize_t conservative_conservativeness_store(struct kobject *kobj,
 
 	conservativeness = val;
 
-	return count;
+	return ret;
 }
 
 static struct kobj_attribute upthreshold_attribute =
