@@ -22,6 +22,7 @@
 #include <linux/mutex.h>
 #include <linux/module.h>
 #include <linux/slab.h>
+#include <msm_rq_stats.c>
 
 #ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
