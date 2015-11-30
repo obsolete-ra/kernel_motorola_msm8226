@@ -22,7 +22,7 @@
 #include <linux/mutex.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <msm_rq_stats.c>
+#include "../mach-msm/acpuclock.h"
 
 #ifdef CONFIG_POWERSUSPEND
 #include <linux/powersuspend.h>
