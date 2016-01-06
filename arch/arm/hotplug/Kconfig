@@ -1,0 +1,5 @@
+config ALUCARD_HOTPLUG
+        bool "Enable alucard cpu hotplug driver"
+        default n
+        help
+          Generic alucard_hotplug cpu hotplug driver for ARM SOCs
