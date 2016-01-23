@@ -576,24 +576,13 @@ static void handle_event_change(enum command_response cmd, void *data)
 					event_notify->packet_buffer,
 					event_notify->exra_data_buffer);
 
-				/*
-				 * If buffer release event is received with inst->state
-				 * greater than STOP means client called STOP directly
-				 * without FLUSH. This also means that they don't expect
-				 * these buffers back. Processing these commands will not
-				 * add any value. This can also results deadlocks between
-				 * try_state and event_notify due to inst->sync_lock.
-				 */
-
-				mutex_lock(&inst->lock);
-				if (inst->state >= MSM_VIDC_STOP ||
-						inst->core->state == VIDC_CORE_INVALID) {
-					dprintk(VIDC_ERR,
-							"Event release buf ref received in invalid state - discard\n");
-					mutex_unlock(&inst->lock);
+				if (inst->state == MSM_VIDC_CORE_INVALID ||
+					inst->core->state ==
+						VIDC_CORE_INVALID) {
+					dprintk(VIDC_DBG,
+						"Event release buf ref received in invalid state - discard\n");
 					return;
 				}
-				mutex_unlock(&inst->lock);
 
 				/*
 				* Get the buffer_info entry for the
@@ -651,10 +640,16 @@ static void handle_event_change(enum command_response cmd, void *data)
 		} else {
 			dprintk(VIDC_DBG,
 				"V4L2_EVENT_SEQ_CHANGED_SUFFICIENT\n");
-			inst->prop.height[CAPTURE_PORT] = event_notify->height;
-			inst->prop.width[CAPTURE_PORT] = event_notify->width;
-			if (!msm_comm_get_stream_output_mode(inst) ==
+			if (msm_comm_get_stream_output_mode(inst) !=
 				HAL_VIDEO_DECODER_SECONDARY) {
+				dprintk(VIDC_DBG,
+					"event_notify->height = %d event_notify->width = %d\n",
+					event_notify->height,
+					event_notify->width);
+				inst->prop.height[CAPTURE_PORT] =
+					event_notify->height;
+				inst->prop.width[CAPTURE_PORT] =
+					event_notify->width;
 				inst->prop.height[OUTPUT_PORT] =
 					event_notify->height;
 				inst->prop.width[OUTPUT_PORT] =
