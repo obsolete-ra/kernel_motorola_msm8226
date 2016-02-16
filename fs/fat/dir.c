@@ -69,6 +69,7 @@ static inline void fat_dir_readahead(struct inode *dir, sector_t iblock,
 /* Returns the inode number of the directory entry at offset pos. If bh is
    non-NULL, it is brelse'd before. Pos is incremented. The buffer header is
    returned in bh.
+
    AV. Most often we do it item-by-item. Makes sense to optimize.
    AV. OK, there we go: if both bh and de are non-NULL we assume that we just
    AV. want the next entry (took one explicit de=NULL in vfat/namei.c).
@@ -343,7 +344,7 @@ int fat_search_long(struct inode *inode, const unsigned char *name,
 	struct super_block *sb = inode->i_sb;
 	struct msdos_sb_info *sbi = MSDOS_SB(sb);
 	struct buffer_head *bh = NULL;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	struct nls_table *nls_disk = sbi->nls_disk;
 	unsigned char nr_slots;
 	wchar_t bufuname[14];
@@ -468,7 +469,7 @@ static int __fat_readdir(struct inode *inode, struct file *filp, void *dirent,
 	struct super_block *sb = inode->i_sb;
 	struct msdos_sb_info *sbi = MSDOS_SB(sb);
 	struct buffer_head *bh;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	struct nls_table *nls_disk = sbi->nls_disk;
 	unsigned char nr_slots;
 	wchar_t bufuname[14];
@@ -887,7 +888,7 @@ EXPORT_SYMBOL_GPL(fat_get_dotdot_entry);
 int fat_dir_empty(struct inode *dir)
 {
 	struct buffer_head *bh;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	loff_t cpos;
 	int result = 0;
 
@@ -913,7 +914,7 @@ EXPORT_SYMBOL_GPL(fat_dir_empty);
 int fat_subdirs(struct inode *dir)
 {
 	struct buffer_head *bh;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	loff_t cpos;
 	int count = 0;
 
@@ -956,7 +957,7 @@ static int __fat_remove_entries(struct inode *dir, loff_t pos, int nr_slots)
 {
 	struct super_block *sb = dir->i_sb;
 	struct buffer_head *bh;
-	struct msdos_dir_entry *de, *endp;
+	struct msdos_dir_entry *de = NULL, *endp;
 	int err = 0, orig_slots;
 
 	while (nr_slots) {
@@ -990,7 +991,7 @@ static int __fat_remove_entries(struct inode *dir, loff_t pos, int nr_slots)
 int fat_remove_entries(struct inode *dir, struct fat_slot_info *sinfo)
 {
 	struct super_block *sb = dir->i_sb;
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	struct buffer_head *bh;
 	int err = 0, nr_slots;
 
@@ -1094,7 +1095,7 @@ int fat_alloc_new_dir(struct inode *dir, struct timespec *ts)
 	struct super_block *sb = dir->i_sb;
 	struct msdos_sb_info *sbi = MSDOS_SB(sb);
 	struct buffer_head *bhs[MAX_BUF_PER_PAGE];
-	struct msdos_dir_entry *de;
+	struct msdos_dir_entry *de = NULL;
 	sector_t blknr;
 	__le16 date, time;
 	u8 time_cs;
