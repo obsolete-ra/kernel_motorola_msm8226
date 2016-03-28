@@ -696,6 +696,87 @@ extern bool s2w_scr_suspended;
 extern bool dt2w_scr_suspended;
 #endif
 
+static unsigned int detect_panel_state(u8 pwr_mode)
+{
+	unsigned int panel_state = DSI_DISP_INVALID_STATE;
+
+	switch (pwr_mode & 0x14) {
+	case 0x14:
+		panel_state = DSI_DISP_ON_SLEEP_OUT;
+		break;
+	case 0x10:
+		panel_state = DSI_DISP_OFF_SLEEP_OUT;
+		break;
+	case 0x00:
+		panel_state = DSI_DISP_OFF_SLEEP_IN;
+		break;
+	}
+
+	return panel_state;
+}
+
+static int mdss_dsi_quickdraw_check_panel_state(struct mdss_panel_data *pdata,
+					u8 *pwr_mode, char **dropbox_issue)
+{
+	struct mdss_dsi_ctrl_pdata *ctrl = NULL;
+	struct mipi_panel_info *mipi;
+	struct msm_fb_data_type *mfd;
+	int panel_dead = 0;
+	unsigned int panel_state = 0;
+	int ret = 0;
+
+	*pwr_mode = 0xFF;
+
+	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
+				panel_data);
+	mipi  = &pdata->panel_info.mipi;
+
+	mfd = pdata->mfd;
+	if (mfd->quickdraw_panel_state == DSI_DISP_INVALID_STATE) {
+		pr_warn("%s: quickdraw requests full reinitialization\n",
+			__func__);
+		panel_dead = 1;
+		*dropbox_issue = ESD_SENSORHUB_DROPBOX_MSG;
+	} else {
+		mdss_dsi_get_pwr_mode(pdata, pwr_mode);
+
+		if (*pwr_mode == 0xFF) {
+			int gpio_val = gpio_get_value(ctrl->mipi_d0_sel);
+			pr_warn("%s: unable to read power state! [gpio: %d]\n",
+				__func__, gpio_val);
+			panel_dead = 1;
+			*dropbox_issue = PWR_MODE_FAIL_DROPBOX_MSG;
+		} else {
+			panel_state = detect_panel_state(*pwr_mode);
+			if (panel_state == DSI_DISP_INVALID_STATE) {
+				pr_warn("%s: detected invalid panel state\n",
+					__func__);
+				panel_dead = 1;
+				*dropbox_issue = PWR_MODE_INVALID_DROPBOX_MSG;
+			}
+		}
+
+		if (!panel_dead) {
+			if (mfd->quickdraw_panel_state != panel_state) {
+				pr_warn("%s: panel state is %d while %d expected\n",
+					__func__, panel_state,
+					mfd->quickdraw_panel_state);
+				panel_dead = 1;
+				*dropbox_issue = PWR_MODE_MISMATCH_DROPBOX_MSG;
+			} else if (mfd->quickdraw_panel_state ==
+				DSI_DISP_OFF_SLEEP_IN)
+				ret = 1;
+		}
+	}
+
+	if (panel_dead) {
+		pr_err("%s: triggering ESD recovery\n", __func__);
+		mfd->quickdraw_reset_panel = true;
+	}
+
+	return ret;
+}
+
 static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 {
 	struct mipi_panel_info *mipi;
